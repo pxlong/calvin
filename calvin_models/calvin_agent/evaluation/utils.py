@@ -25,13 +25,18 @@ def get_default_model_and_env(train_folder, dataset_path, checkpoint, env=None, 
     train_cfg_path = format_sftp_path(train_cfg_path)
     cfg = OmegaConf.load(train_cfg_path)
     lang_folder = cfg.datamodule.datasets.lang_dataset.lang_folder
+    print(f"lang_folder: {lang_folder}")
+
     if not hydra.core.global_hydra.GlobalHydra.instance().is_initialized():
         hydra.initialize("../../conf/datamodule/datasets")
     # we don't want to use shm dataset for evaluation
     datasets_cfg = hydra.compose("vision_lang.yaml", overrides=["lang_dataset.lang_folder=" + lang_folder])
     # since we don't use the trainer during inference, manually set up data_module
+    print(f"datasets_cfg: {datasets_cfg}")
+    print(f"dataset_path: {dataset_path}")
     cfg.datamodule.datasets = datasets_cfg
     cfg.datamodule.root_data_dir = dataset_path
+
     data_module = hydra.utils.instantiate(cfg.datamodule, num_workers=0)
     data_module.prepare_data()
     data_module.setup()
@@ -48,6 +53,8 @@ def get_default_model_and_env(train_folder, dataset_path, checkpoint, env=None, 
     # import the model class that was used for the training
     model_cls = locate(cfg.model._target_)
     model = model_cls.load_from_checkpoint(checkpoint)
+    print(f"dataset.abs_datasets_dir: {dataset.abs_datasets_dir}")
+    print(f"dataset.lang_folder: {dataset.lang_folder}")
     model.load_lang_embeddings(dataset.abs_datasets_dir / dataset.lang_folder / "embeddings.npy")
     model.freeze()
     if cfg.model.action_decoder.get("load_action_bounds", False):

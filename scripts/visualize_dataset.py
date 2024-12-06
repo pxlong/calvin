@@ -6,7 +6,7 @@ import numpy as np
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Interactive visualization of CALVIN dataset")
-    parser.add_argument("path", type=str, help="Path to dir containing scene_info.npy")
+    parser.add_argument("--path", type=str, help="Path to dir containing scene_info.npy")
     parser.add_argument("-d", "--data", nargs="*", default=["rgb_static", "rgb_gripper"], help="Data to visualize")
     args = parser.parse_args()
 
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     ann_idx = -1
 
     while True:
+        print(f"load episode: {indices[idx]:07d}")
         t = np.load(f"{args.path}/episode_{indices[idx]:07d}.npz", allow_pickle=True)
 
         for d in args.data:

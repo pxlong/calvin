@@ -12,7 +12,7 @@ num_sequences: 128
 replan_freq: 30
 ep_len: 360
 empty_cache: true
-log_video_to_file: false
-save_dir: ./videos
+log_video_to_file: true
+save_dir: /media/longpinxin/DATA/px/calvin/evaluation/video
 lang_folder: ${datamodule.datasets.lang_dataset.lang_folder}
 debug: false

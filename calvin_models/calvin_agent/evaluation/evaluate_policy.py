@@ -36,7 +36,7 @@ from calvin_env.envs.play_table_env import get_env
 logger = logging.getLogger(__name__)
 
 EP_LEN = 360
-NUM_SEQUENCES = 1000
+NUM_SEQUENCES = 10
 
 
 def get_epoch(checkpoint):
@@ -99,6 +99,8 @@ def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_pl
     eval_log_dir = get_log_dir(eval_log_dir)
 
     eval_sequences = get_sequences(NUM_SEQUENCES)
+    print(f"eval_sequences type: {type(eval_sequences)}")
+    print(f"eval_sequences: {eval_sequences}")
 
     results = []
     plans = defaultdict(list)
@@ -106,13 +108,18 @@ def evaluate_policy(model, env, epoch, eval_log_dir=None, debug=False, create_pl
     if not debug:
         eval_sequences = tqdm(eval_sequences, position=0, leave=True)
 
+    idx = 0
     for initial_state, eval_sequence in eval_sequences:
+        print()
+        print(f"\nSequence {idx + 1}/{NUM_SEQUENCES}")
+        # print(f"initial_state: {initial_state}, eval_sequence: {eval_sequence}")
         result = evaluate_sequence(env, model, task_oracle, initial_state, eval_sequence, val_annotations, plans, debug)
         results.append(result)
         if not debug:
             eval_sequences.set_description(
                 " ".join([f"{i + 1}/5 : {v * 100:.1f}% |" for i, v in enumerate(count_success(results))]) + "|"
             )
+        idx += 1
 
     if create_plan_tsne:
         create_tsne(plans, eval_log_dir, epoch)
@@ -131,8 +138,6 @@ def evaluate_sequence(env, model, task_checker, initial_state, eval_sequence, va
     success_counter = 0
     if debug:
         time.sleep(1)
-        print()
-        print()
         print(f"Evaluating sequence: {' -> '.join(eval_sequence)}")
         print("Subtask: ", end="")
     for subtask in eval_sequence:
@@ -154,6 +159,7 @@ def rollout(env, model, task_oracle, subtask, val_annotations, plans, debug):
     obs = env.get_obs()
     # get lang annotation for subtask
     lang_annotation = val_annotations[subtask][0]
+    print(f"lang_annotation: {lang_annotation} ", end="")
     model.reset()
     start_info = env.get_info()
 
@@ -213,7 +219,7 @@ def main():
 
     parser.add_argument("--debug", action="store_true", help="Print debug info and visualize environment.")
 
-    parser.add_argument("--eval_log_dir", default=None, type=str, help="Where to log the evaluation results.")
+    parser.add_argument("--eval_log_dir", default="/media/longpinxin/DATA/px/calvin/evaluation", type=str, help="Where to log the evaluation results.")
 
     parser.add_argument("--device", default=0, type=int, help="CUDA device")
     args = parser.parse_args()
@@ -238,6 +244,7 @@ def main():
             checkpoints = get_all_checkpoints(Path(args.train_folder))[-args.last_k_checkpoints :]
         elif args.checkpoint is not None:
             checkpoints = [Path(args.checkpoint)]
+        print(f"how many checkpoints? {len(checkpoints)}")
 
         env = None
         for checkpoint in checkpoints:
